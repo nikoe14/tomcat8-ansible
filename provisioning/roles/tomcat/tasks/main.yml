@@ -1,0 +1,57 @@
+---
+- name: Install Python 2
+  raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+
+- name: Install JDK 1.8
+  apt: name=openjdk-8-jdk state=present
+
+- name: Add group "tomcat"
+  group: name=tomcat
+
+- name: Add user "tomcat"
+  user: name=tomcat group=tomcat shell=/bin/false home=/opt/tomcat createhome=yes
+
+- name: Install Tomcat
+  unarchive: src=http://apache.dattatec.com/tomcat/tomcat-8/v8.5.11/bin/apache-tomcat-8.5.11.tar.gz dest=/opt/tomcat extra_opts="--strip-components=1" remote_src=True
+
+- name: Change ownership of Tomcat installation
+  file: path=/opt/tomcat group=tomcat state=directory recurse=yes
+
+- name: Change permissions of "conf" folder contents
+  file: path=/opt/tomcat/conf state=directory mode=0640 recurse=yes
+
+- name: Change permissions of "conf" folder
+  file: path=/opt/tomcat/conf state=directory mode=0750
+
+- name: Change permissions of "webapps" folder
+  file: path=/opt/tomcat/webapps owner=tomcat state=directory recurse=yes
+
+- name: Change permissions of "work" folder
+  file: path=/opt/tomcat/work owner=tomcat state=directory recurse=yes
+
+- name: Change permissions of "temp" folder
+  file: path=/opt/tomcat/temp owner=tomcat state=directory recurse=yes
+
+- name: Change permissions of "logs" folder
+  file: path=/opt/tomcat/logs owner=tomcat state=directory recurse=yes
+
+- name: Install Tomcat init script
+  copy: src=tomcat.service dest=/etc/systemd/system/tomcat.service
+
+- name: Configure Tomcat
+  template: src=server.xml dest=/opt/tomcat/conf
+
+- name: Configure Tomcat users
+  template: src=tomcat-users.xml dest=/opt/tomcat/conf
+
+- name: Enable App Manager incoming connections
+  copy: src=context.xml dest=/opt/tomcat/webapps/manager/META-INF/context.xml
+
+- name: Enable Host Manager incoming connections
+  copy: src=context.xml dest=/opt/tomcat/webapps/host-manager/META-INF/context.xml
+
+- name: Start Tomcat
+  systemd: state=started enabled=True daemon_reload=yes name=tomcat
+
+- name: wait for tomcat to start
+  wait_for: port={{http_port}}

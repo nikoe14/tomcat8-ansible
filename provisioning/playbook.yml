@@ -1,0 +1,10 @@
+---
+
+- hosts: tomcat
+  gather_facts: False
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    - tomcat
