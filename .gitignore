@@ -1,0 +1,3 @@
+*.log
+provisioning/.vagrant
+provisioning/playbook.retry

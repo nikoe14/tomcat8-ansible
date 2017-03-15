@@ -1,3 +1,5 @@
+apache_url: http://apache.dattatec.com/tomcat/tomcat-8/v8.5.11/bin/apache-tomcat-8.5.11.tar.gz
+
 http_port: 8080
 https_port: 8443
 
