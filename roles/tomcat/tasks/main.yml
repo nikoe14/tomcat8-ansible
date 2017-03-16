@@ -6,11 +6,11 @@
   group: name=tomcat
 
 - name: add user "tomcat"
-  user: name=tomcat group=tomcat home=/usr/share/tomcat createhome=yes
+  user: name=tomcat group=tomcat shell=/bin/false home=/usr/share/tomcat createhome=yes
   become: True
   become_method: sudo
 
-- name: unarchive the tar file
+- name: Install Tomcat
   become: yes
   unarchive:
     src: "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.0/bin/apache-tomcat-8.5.0.tar.gz"
@@ -31,19 +31,17 @@
   template: src=tomcat-users.xml dest=/usr/share/tomcat/conf/
   notify: restart tomcat
 
-- name: Configure Tomcat access 
-  template: src=context.xml dest=/usr/share/tomcat/webapps/host-manager/META-INF/
-  notify: restart tomcat
-
-- name: Configure Tomcat access
-  template: src=context.xml dest=/usr/share/tomcat/webapps/manager/META-INF/
-  notify: restart tomcat
+- name: Enable App and Host Manager incoming connections
+  copy: src=context.xml dest=/usr/share/tomcat/webapps/manager/META-INF/context.xml
+  with_items:
+    - manager
+    - host-manager
 
 - name: Install Tomcat init script
-  copy: src=tomcat-initscript.sh dest=/etc/init.d/tomcat mode=0755
+  copy: src=tomcat.service dest=/etc/systemd/system/tomcat.service
 
-- name: Start Tomcat
-  service: name=tomcat state=started enabled=yes
+- name: Start Tomcat service
+  systemd: state=started enabled=True daemon_reload=yes name=tomcat
 
 - name: insert firewalld rule for tomcat http port
   firewalld: port={{ http_port }}/tcp permanent=true state=enabled immediate=yes
